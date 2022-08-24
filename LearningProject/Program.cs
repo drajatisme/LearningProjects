@@ -1,4 +1,5 @@
 using LearningProject.Data;
+using LearningProject.Middlewares;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRequestLoggingMiddleware();
 
 app.MapControllerRoute(
     name: "default",
