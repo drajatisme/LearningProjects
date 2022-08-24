@@ -1,7 +1,15 @@
-using LearningProject.Data;
+using HealthChecks.UI.Client;
 
+using LearningProject.Data;
+using LearningProject.Middlewares;
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+
+using System.Net.NetworkInformation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +22,42 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHealthChecks()
+    .AddCheck("Foo", () => HealthCheckResult.Healthy("Foo Is Ok!"), tags: new[] { "foo_tag" })
+    .AddCheck("Bar", () => HealthCheckResult.Unhealthy("Bar Is Nok!"), tags: new[] { "bar_tag" })
+    .AddCheck("Ping", () =>
+    {
+        try
+        {
+            using (var ping = new Ping())
+            {
+                var reply = ping.Send("localhost");
+                if (reply.Status != IPStatus.Success)
+                {
+                    return HealthCheckResult.Unhealthy();
+                }
+
+                if (reply.RoundtripTime > 100)
+                {
+                    return HealthCheckResult.Degraded();
+                }
+
+                return HealthCheckResult.Healthy();
+            }
+        }
+        catch
+        {
+            return HealthCheckResult.Unhealthy();
+        }
+    })
+    .AddCheck<ExampleHealthCheck>("sample", null, new[] { "sampleTags" });
+
+builder.Services.AddHealthChecksUI(setupSettings: setup =>
+{
+    setup.AddHealthCheckEndpoint("EP1", "/health");
+})
+                .AddInMemoryStorage();
 
 var app = builder.Build();
 
@@ -41,5 +85,11 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+app.MapHealthChecks("/health", new HealthCheckOptions()
+{
+    Predicate = _ =>true,
+    ResponseWriter= UIResponseWriter.WriteHealthCheckUIResponse
+});
+app.MapHealthChecksUI();
 
 app.Run();
