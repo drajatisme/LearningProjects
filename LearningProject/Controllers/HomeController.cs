@@ -8,15 +8,27 @@ namespace LearningProject.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        // Standard Capturing category
+        //private readonly ILogger<HomeController> _logger;
+        //public HomeController(ILogger<HomeController> logger)
+        //{
+        //    _logger = logger;
+        //}
 
-        public HomeController(ILogger<HomeController> logger)
+        private readonly ILogger _logger;
+        public HomeController(ILoggerFactory factory)
         {
-            _logger = logger;
+            _logger = factory.CreateLogger("Demo Category");
         }
 
         public IActionResult Index()
         {
+            _logger.LogTrace("Trace Log");
+            _logger.LogDebug("Debug Log");
+            _logger.LogInformation($"Information Log");
+            _logger.LogWarning($"Warning Log");
+            _logger.LogError($"Error Log");
+            _logger.LogCritical($"Critical Log");
             return View();
         }
 
@@ -30,5 +42,10 @@ namespace LearningProject.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+    }
+
+    public class LoggingId
+    {
+        public const int DemoCode = 1001;
     }
 }

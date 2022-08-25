@@ -5,6 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging
+    .ClearProviders()
+    .AddConfiguration(builder.Configuration.GetSection("Logging"))
+    .AddDebug()
+    .AddConsole();
+
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -16,6 +22,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+// For Logging when app start
+var logger = app.Logger;
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -29,17 +38,21 @@ else
     app.UseHsts();
 }
 
+logger.LogInformation("UseHttpsRedirection");
 app.UseHttpsRedirection();
+logger.LogInformation("UseStaticFiles");
 app.UseStaticFiles();
 
+logger.LogInformation("UseRouting");
 app.UseRouting();
 
-app.UseAuthentication();
+logger.LogInformation("UseAuthorization");
 app.UseAuthorization();
 
+logger.LogInformation("MapControllerRoute");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
 
+logger.LogInformation("Run");
 app.Run();
